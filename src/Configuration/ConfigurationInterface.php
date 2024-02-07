@@ -10,4 +10,9 @@ interface ConfigurationInterface
      * @return iterable<ForwardConfigurationInterface>
      */
     public function getForwardConfiguration(): iterable;
+
+    /**
+     * @return positive-int
+     */
+    public function getLoopDelay(): int;
 }

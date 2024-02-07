@@ -1,3 +1,4 @@
 vendor/
 phpcs.xml
 psalm.xml
+.phpcs-cache

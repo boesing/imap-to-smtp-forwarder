@@ -12,6 +12,7 @@ final class JsonConfiguration
      * @param non-empty-array<non-empty-string,JsonConfigurationImap>     $imap
      * @param non-empty-array<non-empty-string,JsonConfigurationSmtp>     $smtp
      * @param non-empty-list<JsonConfigurationForward>                    $forwards
+     * @param positive-int                                                $loopDelay
      */
     public function __construct(
         public readonly array $addresses,
@@ -19,6 +20,7 @@ final class JsonConfiguration
         public readonly array $imap,
         public readonly array $smtp,
         public readonly array $forwards,
+        public readonly int $loopDelay = 5,
     ) {
     }
 }

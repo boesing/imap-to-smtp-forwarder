@@ -64,7 +64,7 @@ final class StartCommand extends Command
                 break;
             }
 
-            sleep(1);
+            sleep($this->configuration->getLoopDelay());
         }
     }
 }
