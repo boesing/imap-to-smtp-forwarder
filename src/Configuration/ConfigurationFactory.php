@@ -60,7 +60,7 @@ final class ConfigurationFactory implements ConfigurationFactoryInterface
             );
         }
 
-        return new Configuration($this->createForwardsFromConfiguration($configuration));
+        return new Configuration($this->createForwardsFromConfiguration($configuration), $configuration->loopDelay);
     }
 
     /**
