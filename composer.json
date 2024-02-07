@@ -1,0 +1,36 @@
+{
+    "name": "boesing/imap-to-smtp-forwarder",
+    "description": "Docker image to pull mails from an imap server, forward them to one or more mails and either move or delete those mails afterwards",
+    "type": "project",
+    "license": "BSD-3-Clause",
+    "autoload": {
+        "psr-4": {
+            "Boesing\\ImapToSmtpForwarder\\": "src/"
+        }
+    },
+    "require": {
+        "php": "~8.3.0",
+        "symfony/console": "^7.0",
+        "symfony/process": "^7.0",
+        "zbateson/mail-mime-parser": "^2.4",
+        "symfony/mailer": "^7.0",
+        "php-imap/php-imap": "^5.0",
+        "laminas/laminas-diactoros": "^3.3",
+        "cuyz/valinor": "^1.9"
+    },
+    "require-dev": {
+        "doctrine/coding-standard": "^12.0",
+        "vimeo/psalm": "^5.21"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "classmap-authoritative": true
+    },
+    "scripts": {
+        "cs-check": "phpcs",
+        "cs-fix": "phpcbf",
+        "analyze": "vendor/bin/psalm --stats"
+    }
+}

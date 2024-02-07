@@ -1,0 +1,36 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+use Boesing\ImapToSmtpForwarder\Command\StartCommand;
+use Boesing\ImapToSmtpForwarder\Configuration\ConfigurationFactory;
+use Boesing\ImapToSmtpForwarder\Forwarder\ForwarderFactory;
+use Composer\InstalledVersions;
+use CuyZ\Valinor\MapperBuilder;
+use Laminas\Diactoros\StreamFactory;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
+(static function (): void {
+    require __DIR__ . '/../vendor/autoload.php';
+    $app = new Application('imap-to-smtp-forwarder', InstalledVersions::getRootPackage()['pretty_version']);
+    $output = new ConsoleOutput();
+
+    try {
+        $configuration = (new ConfigurationFactory(
+            new StreamFactory(),
+            (new MapperBuilder())->mapper(),
+        ))->createFromConfigurationFile(__DIR__ . '/../etc/configuration.json');
+    } catch (InvalidArgumentException $exception) {
+        $output->writeln('<error>Configuration is invalid.</error>');
+        $output->writeln((string) $exception);
+        exit(1);
+    }
+
+    $app->add(new StartCommand(
+        $configuration,
+        new ForwarderFactory(new StreamFactory()),
+    ));
+
+    exit($app->run(output: $output));
+})();
