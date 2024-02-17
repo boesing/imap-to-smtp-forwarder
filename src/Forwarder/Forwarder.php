@@ -59,8 +59,9 @@ final class Forwarder implements ForwarderInterface
 
                 $this->mailer->send($messageToDestination);
                 $output->writeln(sprintf('Forwarded message from %s to %s', $messageToForward->getMailFromAddress()->email, $forwardDestination->email));
-                $this->executeForwardAction($this->action, $messageToForward);
             }
+
+            $this->executeForwardAction($this->action, $messageToForward);
         }
     }
 
