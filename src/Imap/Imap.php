@@ -84,8 +84,9 @@ final class Imap implements ImapInterface
         $this->mailbox->deleteMail($messageToForward->getMessageId());
     }
 
-    public function move(MessageInterface $messageToForward, string $inboxToMove): void
+    public function move(MessageInterface $messageToForward, string $inboxToMove, bool $markAsRead): void
     {
+        $this->mailbox->markMailAsRead($messageToForward->getMessageId());
         $this->mailbox->moveMail($messageToForward->getMessageId(), $inboxToMove);
     }
 

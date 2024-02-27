@@ -89,6 +89,6 @@ final class Forwarder implements ForwarderInterface
             return;
         }
 
-        $this->imap->move($messageToForward, $action->getInboxToMove());
+        $this->imap->move($messageToForward, $action->getInboxToMove(), $action->markAsRead());
     }
 }

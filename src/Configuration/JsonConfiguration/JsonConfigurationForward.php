@@ -23,6 +23,7 @@ final class JsonConfigurationForward
         public readonly JsonConfigurationForwardActionEnum $action,
         public readonly string $inbox = 'INBOX',
         public readonly string|null $inboxToMove = null,
+        public readonly bool $markAsRead = true,
     ) {
         if ($this->action === JsonConfigurationForwardActionEnum::MOVE && $this->inboxToMove === null) {
             throw new InvalidArgumentException('`move` action needs `inboxToMove` configuration.');

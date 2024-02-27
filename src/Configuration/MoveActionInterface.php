@@ -10,4 +10,6 @@ interface MoveActionInterface
      * @return non-empty-string
      */
     public function getInboxToMove(): string;
+
+    public function markAsRead(): bool;
 }

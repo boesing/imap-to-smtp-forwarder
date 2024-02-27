@@ -152,6 +152,6 @@ final class ConfigurationFactory implements ConfigurationFactoryInterface
     {
         assert($configuration->inboxToMove !== null);
 
-        return new MoveAction($configuration->inboxToMove);
+        return new MoveAction($configuration->inboxToMove, $configuration->markAsRead);
     }
 }

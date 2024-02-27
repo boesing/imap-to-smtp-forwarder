@@ -11,11 +11,17 @@ final class MoveAction implements MoveActionInterface
      */
     public function __construct(
         private readonly string $inboxToMove,
+        private readonly bool $markAsRead,
     ) {
     }
 
     public function getInboxToMove(): string
     {
         return $this->inboxToMove;
+    }
+
+    public function markAsRead(): bool
+    {
+        return $this->markAsRead;
     }
 }

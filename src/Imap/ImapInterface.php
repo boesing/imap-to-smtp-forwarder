@@ -16,5 +16,5 @@ interface ImapInterface
 
     public function delete(MessageInterface $messageToForward): void;
 
-    public function move(MessageInterface $messageToForward, string $inboxToMove): void;
+    public function move(MessageInterface $messageToForward, string $inboxToMove, bool $markAsRead): void;
 }
