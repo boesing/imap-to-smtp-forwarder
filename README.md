@@ -20,6 +20,29 @@ Therefore, I wrote this project to forward messages by using a real SMTP with a 
 You can either use a [catch all](https://en.wikipedia.org/wiki/Email_filtering) setup along with filters to move mails into the according folders before forwarding these or you can use so-called sub-folder addresses.
 Usually, most of the mail servers accept something like `john+subfolder@doe.com` which would be delivered to the `john` account and - if there is a subfolder called `INBOX.subfolder` - into that folder. If the folder does not exist, it will be delivered to `INBOX` instead.
 
+## Build
+
+To build the docker image, just use `docker build`, i.e.:
+
+```shell
+docker build -t "imap-to-smtp-forwarder:local" .
+```
+
+## Installation
+
+To run this docker container, you have to build it and then mount the `configuration.json` as follows:
+
+```text
+/path/on/host/to/configuration.json:/usr/src/forwarder/etc/configuration.json
+```
+
+This will provide the configuration file to the container.
+Once started, the entrypoint will read that config and starts the project.
+
+```shell
+docker run -d --rm -it -v "path/on/host/to/configuration.json:/usr/src/forwarder/etc/configuration.json" imap-to-smtp-forwarder:local
+```
+
 ## Configuration
 
 | Key                            | Type (Format)       | Required            | Description                                                                                                               | Example                                                                                                                                                                                                      |
@@ -28,7 +51,7 @@ Usually, most of the mail servers accept something like `john+subfolder@doe.com`
 | `addresses.<key>.name`         | `string`            | No                  | Name of the person or sender.                                                                                             | `"John Doe"`                                                                                                                                                                                                 |
 | `addresses.<key>.email`        | `string` (`email`)  | Yes                 | Email address of the person or sender.                                                                                    | `"john@doe.com"`                                                                                                                                                                                             |
 | `templates`                    | `object`            | Yes                 | Defines templates for emails as arrays of strings, allowing for multi-line email bodies.                                  | `{ "default": ["Hello %recipient.name%,", "New message from %message.from.email%"] }`                                                                                                                        |
-| `templates.<key>`              | `array` of `string` | Yes                 | Each entry represents a line in the email template. Uses placeholders like `%recipient.name%` and `%message.from.email%`. | `[ "Hello %recipient.name%", "New message from %message.from.email%" ] `                                                                                                                                     |
+| `templates.<key>`              | `array` of `string` | Yes                 | Each entry represents a line in the email template. Uses placeholders like `%recipient.name%` and `%message.from.email%`. | `[ "Hello %recipient.name%", "New message from %message.from.email%" ]`                                                                                                                                      |
 | `imap`                         | `object`            | Yes                 | Collection of IMAP configurations, identified by unique keys.                                                             | `{ "gmail": { "hostname": "imap.gmail.com", "port": 993, "username": "john@doe.com", "password": "<plaintext password>" } }`                                                                                 |
 | `imap.<key>.hostname`          | `string`            | Yes                 | The hostname for the IMAP server.                                                                                         | `"imap.gmail.com"`                                                                                                                                                                                           |
 | `imap.<key>.port`              | `integer`           | Yes                 | Port number for the IMAP server, typically `993` for secure connections.                                                  | `993`                                                                                                                                                                                                        |
