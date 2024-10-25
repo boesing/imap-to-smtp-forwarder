@@ -1,0 +1,292 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "definitions": {
+    "emailAddress": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "email"
+      ],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "name": "John Doe",
+          "email": "john@doe.com"
+        },
+        {
+          "name": "Jane Doe",
+          "email": "jane@doe.com"
+        }
+      ]
+    },
+    "smtpOrImapConfig": {
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1
+        },
+        "password": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "hostname",
+        "port",
+        "username",
+        "password"
+      ],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "hostname": "imap.gmail.com",
+          "port": 993,
+          "username": "john@doe.com",
+          "password": "your_password"
+        }
+      ]
+    },
+    "smtpForwardConfig": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sender": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "identifier",
+        "sender"
+      ],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "identifier": "gmail",
+          "sender": "john"
+        }
+      ]
+    },
+    "moveAction": {
+      "type": "object",
+      "properties": {
+        "imap": {
+          "type": "string",
+          "minLength": 1
+        },
+        "smtp": {
+          "$ref": "#/definitions/smtpForwardConfig"
+        },
+        "inbox": {
+          "type": "string",
+          "minLength": 1,
+          "default": "INBOX"
+        },
+        "action": {
+          "const": "move"
+        },
+        "inboxToMove": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "markAsRead": {
+          "type": "boolean",
+          "default": true
+        },
+        "template": {
+          "$ref": "#/definitions/templateArray"
+        }
+      },
+      "required": [
+        "imap",
+        "smtp",
+        "action",
+        "inboxToMove",
+        "recipients",
+        "template"
+      ],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "imap": "gmail",
+          "smtp": {
+            "identifier": "gmail",
+            "sender": "john"
+          },
+          "inbox": "INBOX.Important",
+          "action": "move",
+          "inboxToMove": "INBOX",
+          "recipients": [
+            "jane",
+            "doe"
+          ],
+          "template": [
+            "Hello %recipient.name%",
+            "New message from %message.from.email%"
+          ]
+        }
+      ]
+    },
+    "deleteAction": {
+      "type": "object",
+      "properties": {
+        "imap": {
+          "type": "string",
+          "minLength": 1
+        },
+        "smtp": {
+          "$ref": "#/definitions/smtpForwardConfig"
+        },
+        "inbox": {
+          "type": "string",
+          "minLength": 1,
+          "default": "INBOX"
+        },
+        "action": {
+          "const": "delete"
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "template": {
+          "$ref": "#/definitions/templateArray"
+        }
+      },
+      "required": [
+        "imap",
+        "smtp",
+        "action",
+        "recipients",
+        "template"
+      ],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "imap": "gmail",
+          "smtp": {
+            "identifier": "gmail",
+            "sender": "john"
+          },
+          "inbox": "INBOX.Trash",
+          "action": "delete",
+          "recipients": [
+            "jane",
+            "doe"
+          ],
+          "template": [
+            "Deleted message from %message.from.name%"
+          ]
+        }
+      ]
+    },
+    "templateArray": {
+      "type": "array",
+      "description": "Array of strings representing lines in the template. Each line corresponds to a message line.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "examples": [
+        [
+          "Hello %recipient.name%,",
+          "You have received a new message."
+        ]
+      ]
+    }
+  },
+  "properties": {
+    "addresses": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "$ref": "#/definitions/emailAddress"
+        }
+      },
+      "additionalProperties": false
+    },
+    "templates": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "$ref": "#/definitions/templateArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "imap": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "$ref": "#/definitions/smtpOrImapConfig"
+        }
+      },
+      "additionalProperties": false
+    },
+    "smtp": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "$ref": "#/definitions/smtpOrImapConfig"
+        }
+      },
+      "additionalProperties": false
+    },
+    "forwards": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/definitions/moveAction"
+          },
+          {
+            "$ref": "#/definitions/deleteAction"
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "addresses",
+    "templates",
+    "imap",
+    "smtp",
+    "forwards"
+  ],
+  "additionalProperties": false
+}
