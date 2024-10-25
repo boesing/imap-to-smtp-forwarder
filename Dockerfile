@@ -9,7 +9,7 @@ RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions imap zip
 
 # Add composer binary to the image
-COPY --from=composer /usr/bin/composer /usr/bin/composer
+COPY --from=composer/composer:2-bin /composer /usr/bin/composer
 
 COPY composer.* /usr/src/forwarder
 COPY bin/console /usr/src/forwarder/bin/
