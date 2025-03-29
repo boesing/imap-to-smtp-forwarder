@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Boesing\ImapToSmtpForwarder\Configuration;
 
+use Override;
 use SensitiveParameter;
 
-final class ImapConfiguration implements ImapConfigurationInterface
+final readonly class ImapConfiguration implements ImapConfigurationInterface
 {
     /**
      * @param non-empty-string $identifier
@@ -16,35 +17,40 @@ final class ImapConfiguration implements ImapConfigurationInterface
      * @param non-empty-string $password
      */
     public function __construct(
-        private readonly string $identifier,
-        private readonly string $hostname,
-        private readonly int $port,
-        private readonly string $username,
+        private string $identifier,
+        private string $hostname,
+        private int $port,
+        private string $username,
         #[SensitiveParameter]
-        private readonly string $password,
+        private string $password,
     ) {
     }
 
+    #[Override]
     public function getHostname(): string
     {
         return $this->hostname;
     }
 
+    #[Override]
     public function getPort(): int
     {
         return $this->port;
     }
 
+    #[Override]
     public function getUsername(): string
     {
         return $this->username;
     }
 
+    #[Override]
     public function getPassword(): string
     {
         return $this->password;
     }
 
+    #[Override]
     public function getIdentifier(): string
     {
         return $this->identifier;

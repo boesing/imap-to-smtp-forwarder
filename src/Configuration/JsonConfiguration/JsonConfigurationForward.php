@@ -6,7 +6,7 @@ namespace Boesing\ImapToSmtpForwarder\Configuration\JsonConfiguration;
 
 use InvalidArgumentException;
 
-final class JsonConfigurationForward
+final readonly class JsonConfigurationForward
 {
     /**
      * @param non-empty-string                 $imap
@@ -16,14 +16,14 @@ final class JsonConfigurationForward
      * @param non-empty-string|null            $inboxToMove
      */
     public function __construct(
-        public readonly string $imap,
-        public readonly JsonConfigurationForwardSmtp $smtp,
-        public readonly array $recipients,
-        public readonly string $template,
-        public readonly JsonConfigurationForwardActionEnum $action,
-        public readonly string $inbox = 'INBOX',
-        public readonly string|null $inboxToMove = null,
-        public readonly bool $markAsRead = true,
+        public string $imap,
+        public JsonConfigurationForwardSmtp $smtp,
+        public array $recipients,
+        public string $template,
+        public JsonConfigurationForwardActionEnum $action,
+        public string $inbox = 'INBOX',
+        public string|null $inboxToMove = null,
+        public bool $markAsRead = true,
     ) {
         if ($this->action === JsonConfigurationForwardActionEnum::MOVE && $this->inboxToMove === null) {
             throw new InvalidArgumentException('`move` action needs `inboxToMove` configuration.');

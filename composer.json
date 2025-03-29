@@ -9,10 +9,11 @@
         }
     },
     "require": {
-        "php": "~8.3.0",
+        "php": "~8.4.0",
+        "ext-imap": "*",
         "symfony/console": "^7.0",
         "symfony/process": "^7.0",
-        "zbateson/mail-mime-parser": "^2.4",
+        "zbateson/mail-mime-parser": "^3.0",
         "symfony/mailer": "^7.0",
         "php-imap/php-imap": "^5.0",
         "laminas/laminas-diactoros": "^3.3",
@@ -20,7 +21,7 @@
     },
     "require-dev": {
         "doctrine/coding-standard": "^12.0",
-        "vimeo/psalm": "^5.21"
+        "vimeo/psalm": "^6.0"
     },
     "config": {
         "allow-plugins": {

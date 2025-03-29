@@ -7,6 +7,7 @@ namespace Boesing\ImapToSmtpForwarder\Command;
 use Boesing\ImapToSmtpForwarder\Configuration\ConfigurationInterface;
 use Boesing\ImapToSmtpForwarder\Forwarder\ForwarderFactoryInterface;
 use Boesing\ImapToSmtpForwarder\Forwarder\ForwarderInterface;
+use Override;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -25,11 +26,13 @@ final class StartCommand extends Command
         parent::__construct(self::NAME);
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->addOption('daemon', 'd', InputOption::VALUE_NONE, 'Start as daemon.');
     }
 
+    #[Override]
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $daemonize = $input->getOption('daemon') === true;

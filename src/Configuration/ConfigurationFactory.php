@@ -13,6 +13,7 @@ use CuyZ\Valinor\Mapper\MappingError;
 use CuyZ\Valinor\Mapper\Source\JsonSource;
 use CuyZ\Valinor\Mapper\TreeMapper;
 use InvalidArgumentException;
+use Override;
 use Psr\Http\Message\StreamFactoryInterface;
 
 use function array_map;
@@ -25,14 +26,15 @@ use function is_string;
 use function json_validate;
 use function sprintf;
 
-final class ConfigurationFactory implements ConfigurationFactoryInterface
+final readonly class ConfigurationFactory implements ConfigurationFactoryInterface
 {
     public function __construct(
-        private readonly StreamFactoryInterface $streamFactory,
-        private readonly TreeMapper $mapper,
+        private StreamFactoryInterface $streamFactory,
+        private TreeMapper $mapper,
     ) {
     }
 
+    #[Override]
     public function createFromConfigurationFile(string $pathToConfigurationFile): ConfigurationInterface
     {
         if (! is_readable($pathToConfigurationFile) || ! is_file($pathToConfigurationFile)) {
