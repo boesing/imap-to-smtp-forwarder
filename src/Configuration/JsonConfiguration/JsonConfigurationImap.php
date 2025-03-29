@@ -6,7 +6,7 @@ namespace Boesing\ImapToSmtpForwarder\Configuration\JsonConfiguration;
 
 use SensitiveParameter;
 
-final class JsonConfigurationImap
+final readonly class JsonConfigurationImap
 {
     /**
      * @param non-empty-string $hostname
@@ -15,11 +15,11 @@ final class JsonConfigurationImap
      * @param int<0,65535>     $port
      */
     public function __construct(
-        public readonly string $hostname,
-        public readonly string $username,
+        public string $hostname,
+        public string $username,
         #[SensitiveParameter]
-        public readonly string $password,
-        public readonly int $port = 993,
+        public string $password,
+        public int $port = 993,
     ) {
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Boesing\ImapToSmtpForwarder\Configuration\JsonConfiguration;
 
-final class JsonConfigurationSmtp
+final readonly class JsonConfigurationSmtp
 {
     /**
      * @param non-empty-string $hostname
@@ -13,10 +13,10 @@ final class JsonConfigurationSmtp
      * @param int<0,65535>     $port
      */
     public function __construct(
-        public readonly string $hostname,
-        public readonly string $username,
-        public readonly string $password,
-        public readonly int $port = 25,
+        public string $hostname,
+        public string $username,
+        public string $password,
+        public int $port = 25,
     ) {
     }
 }

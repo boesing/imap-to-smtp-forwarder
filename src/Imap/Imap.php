@@ -7,6 +7,7 @@ namespace Boesing\ImapToSmtpForwarder\Imap;
 use Boesing\ImapToSmtpForwarder\AddressTransfer;
 use Boesing\ImapToSmtpForwarder\Configuration\ImapConfigurationInterface;
 use InvalidArgumentException;
+use Override;
 use PhpImap\Mailbox;
 use Psr\Http\Message\StreamFactoryInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -18,14 +19,14 @@ use function sprintf;
 
 use const CL_EXPUNGE;
 
-final class Imap implements ImapInterface
+final readonly class Imap implements ImapInterface
 {
-    private readonly Mailbox $mailbox;
-    private readonly MailMimeParser $mailMimeParser;
+    private Mailbox $mailbox;
+    private MailMimeParser $mailMimeParser;
 
     public function __construct(
-        private readonly ImapConfigurationInterface $configuration,
-        private readonly StreamFactoryInterface $streamFactory,
+        private ImapConfigurationInterface $configuration,
+        private StreamFactoryInterface $streamFactory,
     ) {
         $this->mailbox = new Mailbox(
             imapPath: $this->assembleImapPath($this->configuration, 'INBOX'),
@@ -41,6 +42,7 @@ final class Imap implements ImapInterface
         $this->mailMimeParser = new MailMimeParser();
     }
 
+    #[Override]
     public function fetch(string $inbox, OutputInterface $output): iterable
     {
         $this->mailbox->switchMailbox($this->assembleImapPath($this->configuration, $inbox));
@@ -79,11 +81,13 @@ final class Imap implements ImapInterface
         }
     }
 
+    #[Override]
     public function delete(MessageInterface $messageToForward): void
     {
         $this->mailbox->deleteMail($messageToForward->getMessageId());
     }
 
+    #[Override]
     public function move(MessageInterface $messageToForward, string $inboxToMove, bool $markAsRead): void
     {
         $this->mailbox->markMailAsRead($messageToForward->getMessageId());

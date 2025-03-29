@@ -9,6 +9,7 @@ use Boesing\ImapToSmtpForwarder\Configuration\DeleteActionInterface;
 use Boesing\ImapToSmtpForwarder\Configuration\MoveActionInterface;
 use Boesing\ImapToSmtpForwarder\Imap\ImapInterface;
 use Boesing\ImapToSmtpForwarder\Imap\MessageInterface;
+use Override;
 use Psr\Http\Message\StreamInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Mailer\MailerInterface;
@@ -21,23 +22,24 @@ use function array_values;
 use function sprintf;
 use function str_replace;
 
-final class Forwarder implements ForwarderInterface
+final readonly class Forwarder implements ForwarderInterface
 {
     /**
      * @param non-empty-list<AddressTransfer> $forwardDestinations
      * @param non-empty-string                $inboxToWatch
      */
     public function __construct(
-        private readonly ImapInterface $imap,
-        private readonly StreamInterface $template,
-        private readonly array $forwardDestinations,
-        private readonly AddressTransfer $forwardSender,
-        private readonly MailerInterface $mailer,
-        private readonly DeleteActionInterface|MoveActionInterface $action,
-        public readonly string $inboxToWatch,
+        private ImapInterface $imap,
+        private StreamInterface $template,
+        private array $forwardDestinations,
+        private AddressTransfer $forwardSender,
+        private MailerInterface $mailer,
+        private DeleteActionInterface|MoveActionInterface $action,
+        public string $inboxToWatch,
     ) {
     }
 
+    #[Override]
     public function forward(OutputInterface $output): void
     {
         foreach ($this->imap->fetch($this->inboxToWatch, $output) as $messageToForward) {

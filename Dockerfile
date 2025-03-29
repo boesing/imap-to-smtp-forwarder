@@ -1,8 +1,9 @@
 FROM composer:2.6.6 AS composer
 
-FROM php:8.3-cli-alpine AS base
+FROM php:8.4-cli-alpine AS base
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
+RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini;
 RUN mkdir -p /usr/src/forwarder/etc/ /usr/src/forwarder/bin/
 
 RUN chmod +x /usr/local/bin/install-php-extensions && \

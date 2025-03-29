@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Boesing\ImapToSmtpForwarder\Configuration\JsonConfiguration;
 
-final class JsonConfiguration
+final readonly class JsonConfiguration
 {
     /**
      * @param non-empty-array<non-empty-string, JsonConfigurationAddress> $addresses
@@ -15,12 +15,12 @@ final class JsonConfiguration
      * @param positive-int                                                $loopDelay
      */
     public function __construct(
-        public readonly array $addresses,
-        public readonly array $templates,
-        public readonly array $imap,
-        public readonly array $smtp,
-        public readonly array $forwards,
-        public readonly int $loopDelay = 5,
+        public array $addresses,
+        public array $templates,
+        public array $imap,
+        public array $smtp,
+        public array $forwards,
+        public int $loopDelay = 5,
     ) {
     }
 }
