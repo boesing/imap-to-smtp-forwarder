@@ -20,7 +20,7 @@
         "cuyz/valinor": "^1.9"
     },
     "require-dev": {
-        "doctrine/coding-standard": "^12.0",
+        "doctrine/coding-standard": "^13.0",
         "vimeo/psalm": "^6.0"
     },
     "config": {
