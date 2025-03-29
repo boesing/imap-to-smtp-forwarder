@@ -80,7 +80,7 @@ final class ForwarderFactory implements ForwarderFactoryInterface
 
         $smtp = $factory->create(Dsn::fromString(
             sprintf(
-                'tcp://%s:%s@%s:%d',
+                'smtp://%s:%s@%s:%d',
                 $configuration->getUsername(),
                 $configuration->getPassword(),
                 $configuration->getHostname(),
