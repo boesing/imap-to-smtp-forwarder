@@ -6,6 +6,7 @@
     "helpers:pinGitHubActionDigests"
   ],
   "rangeStrategy": "bump",
+  "labels": ["dependencies"],
   "vulnerabilityAlerts": {
     "enabled": false
   },
@@ -20,6 +21,18 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "matchManagers": ["composer"],
+      "addLabels": ["php"]
+    },
+    {
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "addLabels": ["docker"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "addLabels": ["github-actions"]
     }
   ]
 }
