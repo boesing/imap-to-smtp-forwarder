@@ -76,7 +76,7 @@ final class StartCommandTest extends TestCase
         $tester = new CommandTester($this->createUnit($configuration, $forwarderFactory));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Stop the daemon loop.');
+        $this->expectExceptionMessageIs('Stop the daemon loop.');
 
         $tester->execute(['--daemon' => true]);
     }

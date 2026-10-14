@@ -178,7 +178,7 @@ final class ConfigurationFactoryTest extends TestCase
         $file = $this->createConfigurationFile('{ this is not json');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Provided configuration is not a valid JSON configuration');
+        $this->expectExceptionMessageIsOrContains('Provided configuration is not a valid JSON configuration');
 
         $this->createUnit(mapper: $mapper)->createFromConfigurationFile($file);
     }
