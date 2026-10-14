@@ -27,7 +27,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
         exit(1);
     }
 
-    $app->add(new StartCommand(
+    $app->addCommand(new StartCommand(
         $configuration,
         new ForwarderFactory(new StreamFactory()),
     ));

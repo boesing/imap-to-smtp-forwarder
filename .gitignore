@@ -2,3 +2,4 @@ vendor/
 phpcs.xml
 psalm.xml
 .phpcs-cache
+.phpunit.cache

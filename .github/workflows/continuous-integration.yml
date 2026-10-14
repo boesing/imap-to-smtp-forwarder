@@ -4,30 +4,61 @@ on:
   pull_request:
   push:
     branches:
-      - '[0-9]+.[0-9]+.x'
-      - 'refs/pull/*'
-      - 'main'
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  matrix:
-    name: Generate job matrix
+  checks:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
-    steps:
-      - name: Gather CI configuration
-        id: matrix
-        uses: laminas/laminas-ci-matrix-action@v1
-
-  qa:
-    name: QA Checks
-    needs: [matrix]
-    runs-on: ${{ matrix.operatingSystem }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+      matrix:
+        include:
+          - name: Coding standard
+            command: composer cs-check
+          - name: Static analysis
+            command: composer analyze
+          - name: Unit tests
+            command: composer test
     steps:
-      - name: ${{ matrix.name }}
-        uses: laminas/laminas-continuous-integration-action@v1
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          job: ${{ matrix.job }}
+          php-version: "8.5"
+          extensions: ctype, iconv, imap, intl, mbstring
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: ${{ matrix.name }}
+        run: ${{ matrix.command }}
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run integration tests
+        run: docker compose run --rm tests
+
+      - name: Show GreenMail logs
+        if: failure()
+        run: docker compose logs greenmail
+
+      - name: Tear down
+        if: always()
+        run: docker compose down --volumes

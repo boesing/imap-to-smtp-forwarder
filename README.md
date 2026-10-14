@@ -28,6 +28,26 @@ To build the docker image, just use `docker build`, i.e.:
 docker build -t "imap-to-smtp-forwarder:local" .
 ```
 
+## Testing
+
+Unit tests (`tests/Unit`) are the default PHPUnit suite:
+
+```shell
+vendor/bin/phpunit
+```
+
+Integration tests (`tests/Integration`) run the `start` command against a real IMAP/SMTP server
+([GreenMail](https://greenmail-mail-test.github.io/greenmail/)) and verify the result via IMAP.
+Everything needed is defined in `compose.yml`: a throw-away CA and server certificate (so the IMAPS certificate is
+validated like in production), GreenMail and a PHP container built from the project `Dockerfile`.
+
+```shell
+docker compose run --rm tests
+```
+
+Additional arguments are passed to PHPUnit, i.e. `docker compose run --rm tests --filter testMoves`.
+Run `docker compose down -v` afterwards to remove the containers and the generated certificates.
+
 ## Installation
 
 To run this docker container, you have to build it and then mount the `configuration.json` as follows:

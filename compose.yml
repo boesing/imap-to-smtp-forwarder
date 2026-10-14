@@ -1,0 +1,47 @@
+# Integration test environment:
+#
+#   docker compose run --rm tests
+#
+# GreenMail provides SMTP (3025) and IMAPS (3993) for the forwarder under test.
+services:
+  certs:
+    image: alpine/openssl
+    entrypoint: ["sh", "/generate-certs.sh"]
+    volumes:
+      - certs:/certs
+      - ./tests/docker/generate-certs.sh:/generate-certs.sh:ro
+
+  greenmail:
+    image: greenmail/standalone:2.1.3
+    depends_on:
+      certs:
+        condition: service_completed_successfully
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.all
+        -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.tls.keystore.file=/certs/greenmail.p12
+        -Dgreenmail.tls.keystore.password=changeit
+    volumes:
+      - certs:/certs:ro
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && exec 4<>/dev/tcp/127.0.0.1/3993"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  tests:
+    build: .
+    depends_on:
+      greenmail:
+        condition: service_healthy
+    working_dir: /usr/src/forwarder
+    command: ["sh", "tests/docker/run-integration-tests.sh"]
+    volumes:
+      - .:/usr/src/forwarder
+      - vendor:/usr/src/forwarder/vendor
+      - certs:/certs:ro
+
+volumes:
+  certs:
+  vendor:

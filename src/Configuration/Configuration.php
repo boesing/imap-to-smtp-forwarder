@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Boesing\ImapToSmtpForwarder\Configuration;
 
+use Override;
+
 final class Configuration implements ConfigurationInterface
 {
     /**
@@ -16,11 +18,13 @@ final class Configuration implements ConfigurationInterface
     ) {
     }
 
+    #[Override]
     public function getForwardConfiguration(): iterable
     {
         return $this->forwards;
     }
 
+    #[Override]
     public function getLoopDelay(): int
     {
         return $this->loopDelay;

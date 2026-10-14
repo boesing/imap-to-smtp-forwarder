@@ -1,12 +1,12 @@
 FROM composer:2.6.6 AS composer
 
-FROM php:8.3-cli-alpine AS base
+FROM php:8.5-cli-alpine AS base
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
 RUN mkdir -p /usr/src/forwarder/etc/ /usr/src/forwarder/bin/
 
 RUN chmod +x /usr/local/bin/install-php-extensions && \
-    install-php-extensions imap zip
+    install-php-extensions imap intl zip
 
 # Add composer binary to the image
 COPY --from=composer/composer:2-bin /composer /usr/bin/composer
