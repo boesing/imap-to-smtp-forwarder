@@ -5,7 +5,7 @@
 # GreenMail provides SMTP (3025) and IMAPS (3993) for the forwarder under test.
 services:
   certs:
-    image: alpine/openssl
+    image: alpine/openssl:latest
     entrypoint: ["sh", "/generate-certs.sh"]
     volumes:
       - certs:/certs
