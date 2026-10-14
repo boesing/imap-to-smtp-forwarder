@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Boesing\ImapToSmtpForwarder\Tests\Integration;
 
+use RuntimeException;
 use ZBateson\MailMimeParser\Header\HeaderConsts;
 use ZBateson\MailMimeParser\MailMimeParser;
 use ZBateson\MailMimeParser\Message as ParsedMessage;
@@ -29,6 +30,11 @@ final class ReceivedMessage
         return (string) $this->parsed->getHeader(HeaderConsts::FROM)?->getEmail();
     }
 
+    public function toEmail(): string
+    {
+        return (string) $this->parsed->getHeader(HeaderConsts::TO)?->getEmail();
+    }
+
     public function replyToEmail(): string
     {
         return (string) $this->parsed->getHeader(HeaderConsts::REPLY_TO)?->getEmail();
@@ -50,5 +56,18 @@ final class ReceivedMessage
         }
 
         return $attachments;
+    }
+
+    /**
+     * Returns the first attachment parsed as message, which is the original message of a forwarded mail.
+     */
+    public function attachedMessage(): self
+    {
+        $attachments = $this->attachments();
+        if ($attachments === []) {
+            throw new RuntimeException('The message does not have any attachment.');
+        }
+
+        return new self($attachments[0], $this->seen);
     }
 }

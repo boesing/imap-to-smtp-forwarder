@@ -52,10 +52,13 @@ final class ForwardMailsTest extends TestCase
                 $message->text(),
             );
 
-            $attachments = $message->attachments();
-            self::assertCount(1, $attachments);
-            self::assertStringContainsString('Subject: ' . $subject, $attachments[0]);
-            self::assertStringContainsString('Original body', $attachments[0]);
+            self::assertCount(1, $message->attachments());
+
+            $original = $message->attachedMessage();
+            self::assertSame($subject, $original->subject());
+            self::assertSame('billing@example.org', $original->fromEmail());
+            self::assertSame($this->greenMail->email(self::DELETE_SOURCE), $original->toEmail());
+            self::assertSame('Original body', trim($original->text()));
         }
 
         $this->greenMail->awaitNoMessage(self::DELETE_SOURCE, $subject);
@@ -65,12 +68,17 @@ final class ForwardMailsTest extends TestCase
     {
         $first  = uniqid('First ', true);
         $second = uniqid('Second ', true);
-        $this->greenMail->deliver(self::DELETE_SOURCE, 'a@example.org', $first, 'one');
-        $this->greenMail->deliver(self::DELETE_SOURCE, 'b@example.org', $second, 'two');
+        $this->greenMail->deliver(self::DELETE_SOURCE, 'a@example.org', $first, 'First body');
+        $this->greenMail->deliver(self::DELETE_SOURCE, 'b@example.org', $second, 'Second body');
 
         foreach (['jane', 'wade'] as $recipient) {
-            $this->greenMail->awaitMessage($recipient, 'FW: ' . $first);
-            $this->greenMail->awaitMessage($recipient, 'FW: ' . $second);
+            $forwardedFirst  = $this->greenMail->awaitMessage($recipient, 'FW: ' . $first);
+            $forwardedSecond = $this->greenMail->awaitMessage($recipient, 'FW: ' . $second);
+
+            self::assertStringContainsString('a@example.org', $forwardedFirst->text());
+            self::assertStringContainsString('First body', $forwardedFirst->attachments()[0] ?? '');
+            self::assertStringContainsString('b@example.org', $forwardedSecond->text());
+            self::assertStringContainsString('Second body', $forwardedSecond->attachments()[0] ?? '');
         }
 
         $this->greenMail->awaitNoMessage(self::DELETE_SOURCE, $first);
