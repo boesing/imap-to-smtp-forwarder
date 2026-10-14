@@ -12,7 +12,7 @@
         "php": "~8.3.0",
         "symfony/console": "^7.0",
         "symfony/process": "^7.0",
-        "zbateson/mail-mime-parser": "^2.4",
+        "zbateson/mail-mime-parser": "^3.0",
         "symfony/mailer": "^7.0",
         "php-imap/php-imap": "^5.0",
         "laminas/laminas-diactoros": "^3.3",
