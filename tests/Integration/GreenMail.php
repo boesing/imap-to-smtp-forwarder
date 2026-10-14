@@ -12,6 +12,7 @@ use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
 
 use function file_get_contents;
+use function getenv;
 use function imap_close;
 use function imap_fetch_overview;
 use function imap_fetchbody;
@@ -33,16 +34,40 @@ use const FT_PEEK;
  */
 final class GreenMail
 {
-    public const HOST       = 'greenmail';
     public const SMTP_PORT  = 3025;
     public const IMAPS_PORT = 3993;
+    public const API_PORT   = 8080;
     public const PASSWORD   = 'secret';
 
     /** Maximum time in seconds to wait for the forwarder (polling every second) to process a single mail. */
     private const TIMEOUT = 5;
 
-    private const API    = 'http://greenmail:8080';
-    private const DOMAIN = 'example.com';
+    private const DEFAULT_HOST = 'greenmail';
+    private const DOMAIN       = 'example.com';
+
+    /**
+     * By default, GreenMail is reached by its compose service name. When PHPUnit runs outside of the compose network,
+     * set GREENMAIL_HOST (i.e. to 127.0.0.1 for the ports published by compose.ci.yml).
+     *
+     * @return non-empty-string
+     */
+    private function host(): string
+    {
+        $host = getenv('GREENMAIL_HOST');
+
+        return $host === false || $host === '' ? self::DEFAULT_HOST : $host;
+    }
+
+    /**
+     * Additional flags for the IMAP connection of this client, i.e. `/novalidate-cert` as the test CA is only trusted
+     * inside the containers. This does not affect the forwarder, which always validates the certificate.
+     */
+    private function imapFlags(): string
+    {
+        $flags = getenv('GREENMAIL_IMAP_FLAGS');
+
+        return $flags === false ? '' : $flags;
+    }
 
     /**
      * @param non-empty-string $login
@@ -61,7 +86,7 @@ final class GreenMail
      */
     public function deliver(string $login, string $fromEmail, string $subject, string $body): void
     {
-        $mailer = new Mailer(Transport::fromDsn(sprintf('smtp://%s:%d', self::HOST, self::SMTP_PORT)));
+        $mailer = new Mailer(Transport::fromDsn(sprintf('smtp://%s:%d', $this->host(), self::SMTP_PORT)));
         $mailer->send(
             (new Email())
                 ->from($fromEmail)
@@ -76,7 +101,7 @@ final class GreenMail
      */
     public function purge(): void
     {
-        $response = file_get_contents(self::API . '/api/mail/purge', false, stream_context_create([
+        $response = file_get_contents(sprintf('http://%s:%d/api/mail/purge', $this->host(), self::API_PORT), false, stream_context_create([
             'http' => ['method' => 'POST', 'content' => ''],
         ]));
 
@@ -179,7 +204,7 @@ final class GreenMail
     private function connect(string $login, string $folder): Connection
     {
         $connection = imap_open(
-            sprintf('{%s:%d/service=imap/ssl}%s', self::HOST, self::IMAPS_PORT, $folder),
+            sprintf('{%s:%d/service=imap/ssl%s}%s', $this->host(), self::IMAPS_PORT, $this->imapFlags(), $folder),
             $login,
             self::PASSWORD,
             0,

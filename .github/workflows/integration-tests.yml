@@ -15,6 +15,15 @@ jobs:
   integration:
     name: Integration tests
     runs-on: ubuntu-latest
+    env:
+      # Same as in continuous-integration.yml.
+      PHP_VERSION: "8.5"
+      PHP_EXTENSIONS: ctype, iconv, imap, intl, mbstring
+      # Only the forwarder (the image under test) and GreenMail run in containers. PHPUnit runs on the runner and reaches
+      # GreenMail via the ports published by compose.ci.yml.
+      COMPOSE_FILE: compose.yml:compose.ci.yml
+      GREENMAIL_HOST: 127.0.0.1
+      GREENMAIL_IMAP_FLAGS: /novalidate-cert
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -28,8 +37,38 @@ jobs:
       - name: Load forwarder image
         run: docker load --input "${RUNNER_TEMP}/image.tar"
 
+      - name: Setup extension cache
+        id: extcache
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          key: php-extensions-v1
+
+      - name: Cache extensions
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.extcache.outputs.dir }}
+          key: ${{ steps.extcache.outputs.key }}
+          restore-keys: ${{ steps.extcache.outputs.key }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      # Starts the forwarder and its dependencies (GreenMail, certificates), but not the `tests` service.
+      - name: Start forwarder
+        run: docker compose up --detach --wait forwarder
+
       - name: Run integration tests
-        run: docker compose run --rm tests
+        run: composer test-integration
 
       - name: Show forwarder and GreenMail logs
         if: failure()

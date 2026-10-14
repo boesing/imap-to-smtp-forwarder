@@ -52,6 +52,15 @@ Additional arguments are passed to PHPUnit, i.e. `docker compose run --rm tests 
 The forwarder keeps running between test runs, use `docker compose up -d --build forwarder` to apply changes to the code or
 the configuration. Run `docker compose down -v` afterwards to remove the containers and the generated certificates.
 
+The CI does not use the `tests` service, PHPUnit runs directly on the runner. Only the forwarder and GreenMail run in containers,
+GreenMail's ports are published by `compose.ci.yml`. You can do the same locally:
+
+```shell
+export COMPOSE_FILE=compose.yml:compose.ci.yml GREENMAIL_HOST=127.0.0.1 GREENMAIL_IMAP_FLAGS=/novalidate-cert
+docker compose up --detach --wait forwarder
+composer test-integration
+```
+
 ## Installation
 
 To run this docker container, you have to build it and then mount the `configuration.json` as follows:
