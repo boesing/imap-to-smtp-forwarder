@@ -236,3 +236,12 @@ additionally you can configure the actual `inboxToMove` in case the message shou
   ]
 }
 ```
+
+## Dependency updates
+
+Dependencies (Composer packages, Docker images and GitHub Actions) are updated by [Renovate](https://docs.renovatebot.com/),
+configured in `.github/renovate.json`. It runs once a week (Monday morning) and merges non-major updates automatically once the CI is green.
+Major updates have to be reviewed and merged manually.
+
+Security updates are handled by Dependabot (security updates only, no version updates). These pull requests are merged automatically
+once the CI is green as well.
