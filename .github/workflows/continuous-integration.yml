@@ -17,6 +17,9 @@ jobs:
   checks:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    env:
+      PHP_VERSION: "8.5"
+      PHP_EXTENSIONS: ctype, iconv, imap, intl, mbstring
     strategy:
       fail-fast: false
       matrix:
@@ -31,11 +34,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Setup extension cache
+        id: extcache
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          key: php-extensions-v1
+
+      - name: Cache extensions
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.extcache.outputs.dir }}
+          key: ${{ steps.extcache.outputs.key }}
+          restore-keys: ${{ steps.extcache.outputs.key }}
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.5"
-          extensions: ctype, iconv, imap, intl, mbstring
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
           coverage: none
           tools: composer:v2
 
@@ -47,21 +65,7 @@ jobs:
 
   integration:
     name: Integration tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Run integration tests
-        run: docker compose run --rm tests
-
-      - name: Show GreenMail logs
-        if: failure()
-        run: docker compose logs greenmail
-
-      - name: Tear down
-        if: always()
-        run: docker compose down --volumes
+    uses: ./.github/workflows/integration-tests.yml
 
   dependabot-automerge:
     name: Dependabot automerge

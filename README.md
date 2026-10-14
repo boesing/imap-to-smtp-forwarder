@@ -36,17 +36,21 @@ Unit tests (`tests/Unit`) are the default PHPUnit suite:
 vendor/bin/phpunit
 ```
 
-Integration tests (`tests/Integration`) run the `start` command against a real IMAP/SMTP server
-([GreenMail](https://greenmail-mail-test.github.io/greenmail/)) and verify the result via IMAP.
-Everything needed is defined in `compose.yml`: a throw-away CA and server certificate (so the IMAPS certificate is
-validated like in production), GreenMail and a PHP container built from the project `Dockerfile`.
+Integration tests (`tests/Integration`) test the production image (`target: production` of the `Dockerfile`) as a black box.
+Everything needed is defined in `compose.yml`:
+
+- a throw-away CA and server certificate, so the IMAPS certificate is validated like in production,
+- [GreenMail](https://greenmail-mail-test.github.io/greenmail/) as IMAP/SMTP server with fixed accounts,
+- the forwarder, started as daemon with the real configuration `tests/Integration/configuration.json`,
+- the PHPUnit runner, which delivers mails to GreenMail and waits (max. 5 seconds per mail) until the forwarder processed them.
 
 ```shell
 docker compose run --rm tests
 ```
 
 Additional arguments are passed to PHPUnit, i.e. `docker compose run --rm tests --filter testMoves`.
-Run `docker compose down -v` afterwards to remove the containers and the generated certificates.
+The forwarder keeps running between test runs, use `docker compose up -d --build forwarder` to apply changes to the code or
+the configuration. Run `docker compose down -v` afterwards to remove the containers and the generated certificates.
 
 ## Installation
 

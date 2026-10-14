@@ -1,0 +1,45 @@
+name: "Integration Tests"
+
+on:
+  workflow_call:
+    inputs:
+      image-artifact:
+        description: >-
+          Name of an artifact containing `image.tar` with the forwarder image (tagged as in compose.yml), which is tested
+          instead of building the image from the checked out sources.
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download forwarder image
+        if: inputs.image-artifact != ''
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.image-artifact }}
+          path: ${{ runner.temp }}
+
+      - name: Load forwarder image
+        if: inputs.image-artifact != ''
+        run: docker load --input "${RUNNER_TEMP}/image.tar"
+
+      - name: Run integration tests
+        run: docker compose run --rm tests
+
+      - name: Show forwarder and GreenMail logs
+        if: failure()
+        run: docker compose logs forwarder greenmail
+
+      - name: Tear down
+        if: always()
+        run: docker compose down --volumes

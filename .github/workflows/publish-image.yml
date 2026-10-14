@@ -17,6 +17,11 @@ on:
 permissions:
   contents: read
 
+# Releases must not be cancelled half-way and must not run in parallel, as the version counter reads existing tags.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('{0}-pr-{1}', github.workflow, github.ref) || 'release' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Releases are only created when image relevant files changed since the last release (also for manual runs).
   changes:
@@ -49,18 +54,15 @@ jobs:
             echo "Release needed: ${changed}"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  image:
-    name: Build${{ github.event_name != 'pull_request' && ' and push' || '' }} image
+  # Builds the image exactly once. The very same image is tested by the integration job and pushed by the publish job.
+  build:
+    name: Build image
     needs: changes
     if: needs.changes.outputs.changed == 'true' && (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
-    # Releases must not be cancelled half-way and must not run in parallel, as the version counter reads existing tags.
-    concurrency:
-      group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.ref) || 'release' }}
-      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-    permissions:
-      contents: write
-      packages: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -79,14 +81,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to ghcr.io
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Extract image metadata
         id: meta
         uses: docker/metadata-action@v6
@@ -100,29 +94,73 @@ jobs:
             type=raw,value={{date 'YYYY.MM'}},enable=${{ github.event_name != 'pull_request' }}
             type=raw,value=latest,enable=${{ github.event_name != 'pull_request' }}
 
-      - name: Build${{ github.event_name != 'pull_request' && ' and push' || '' }} image
+      - name: Build image
         uses: docker/build-push-action@v7
         with:
           context: .
           target: production
-          push: ${{ github.event_name != 'pull_request' }}
-          outputs: ${{ github.event_name == 'pull_request' && format('type=docker,dest={0}/image.tar', runner.temp) || '' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          push: false
+          # The tag is the one compose.yml expects for the forwarder service of the integration tests.
+          tags: imap-to-smtp-forwarder:integration
           labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=docker,dest=${{ runner.temp }}/image.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Upload image
-        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v7
         with:
-          name: image-pr-${{ github.event.pull_request.number }}
+          name: ${{ github.event_name == 'pull_request' && format('image-pr-{0}', github.event.pull_request.number) || 'image' }}
           path: ${{ runner.temp }}/image.tar
-          retention-days: 7
+          retention-days: ${{ github.event_name == 'pull_request' && 7 || 1 }}
+
+  # Gate for the release, pull requests already run the integration tests in the continuous integration workflow.
+  integration:
+    name: Integration tests
+    needs: build
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/integration-tests.yml
+    with:
+      image-artifact: image
+
+  publish:
+    name: Push image and create release
+    needs:
+      - build
+      - integration
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Download image
+        uses: actions/download-artifact@v8
+        with:
+          name: image
+          path: ${{ runner.temp }}
+
+      - name: Load image
+        run: docker load --input "${RUNNER_TEMP}/image.tar"
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        run: |
+          while read -r tag; do
+            docker tag imap-to-smtp-forwarder:integration "$tag"
+            docker push "$tag"
+          done <<< "$TAGS"
+        env:
+          TAGS: ${{ needs.build.outputs.tags }}
 
       - name: Create release
-        if: github.event_name != 'pull_request'
         run: gh release create "$VERSION" --target "$GITHUB_SHA" --title "$VERSION" --generate-notes
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.build.outputs.version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

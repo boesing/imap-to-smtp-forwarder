@@ -5,32 +5,31 @@ declare(strict_types=1);
 namespace Boesing\ImapToSmtpForwarder\Tests\Integration;
 
 use IMAP\Connection;
+use PHPUnit\Framework\Assert;
 use RuntimeException;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
 
-use function bin2hex;
 use function file_get_contents;
 use function imap_close;
-use function imap_createmailbox;
 use function imap_fetch_overview;
 use function imap_fetchbody;
 use function imap_last_error;
 use function imap_open;
 use function imap_search;
-use function is_array;
-use function json_decode;
-use function json_encode;
-use function random_bytes;
+use function microtime;
 use function sprintf;
+use function str_contains;
 use function stream_context_create;
+use function usleep;
 
 use const FT_PEEK;
-use const JSON_THROW_ON_ERROR;
 
 /**
  * Thin client for the GreenMail container defined in compose.yml.
+ *
+ * The accounts are created by GreenMail itself (see `greenmail.users` in compose.yml).
  */
 final class GreenMail
 {
@@ -39,38 +38,11 @@ final class GreenMail
     public const IMAPS_PORT = 3993;
     public const PASSWORD   = 'secret';
 
+    /** Maximum time in seconds to wait for the forwarder (polling every second) to process a single mail. */
+    private const TIMEOUT = 5;
+
     private const API    = 'http://greenmail:8080';
     private const DOMAIN = 'example.com';
-
-    /**
-     * Creates a user with a unique login, so that tests never see each others mails.
-     *
-     * @param non-empty-string $prefix
-     * @return non-empty-string
-     */
-    public function createUser(string $prefix): string
-    {
-        $login = sprintf('%s-%s', $prefix, bin2hex(random_bytes(4)));
-
-        $response = file_get_contents(self::API . '/api/user', false, stream_context_create([
-            'http' => [
-                'method' => 'POST',
-                'header' => "Content-Type: application/json\r\n",
-                'content' => json_encode([
-                    'login' => $login,
-                    'email' => $this->email($login),
-                    'password' => self::PASSWORD,
-                ], JSON_THROW_ON_ERROR),
-            ],
-        ]));
-
-        $user = $response === false ? null : json_decode($response, true);
-        if (! is_array($user) || ($user['login'] ?? null) !== $login) {
-            throw new RuntimeException(sprintf('Unable to create GreenMail user "%s".', $login));
-        }
-
-        return $login;
-    }
 
     /**
      * @param non-empty-string $login
@@ -100,18 +72,81 @@ final class GreenMail
     }
 
     /**
+     * Removes all mails from all mailboxes. The folders itself are kept.
+     */
+    public function purge(): void
+    {
+        $response = file_get_contents(self::API . '/api/mail/purge', false, stream_context_create([
+            'http' => ['method' => 'POST', 'content' => ''],
+        ]));
+
+        if ($response === false || ! str_contains($response, 'Purged mails')) {
+            throw new RuntimeException(sprintf('Unable to purge GreenMail mails: %s', $response === false ? 'no response' : $response));
+        }
+    }
+
+    /**
+     * Waits until a mail with the given subject is available in the folder.
+     *
      * @param non-empty-string $login
      * @param non-empty-string $folder
      */
-    public function createFolder(string $login, string $folder): void
+    public function awaitMessage(string $login, string $subject, string $folder = 'INBOX'): ReceivedMessage
     {
-        $connection = $this->connect($login);
+        $deadline = microtime(true) + self::TIMEOUT;
 
-        if (! imap_createmailbox($connection, $this->path($folder))) {
-            throw new RuntimeException(sprintf('Unable to create folder "%s": %s', $folder, (string) imap_last_error()));
-        }
+        do {
+            foreach ($this->messages($login, $folder) as $message) {
+                if ($message->subject() === $subject) {
+                    return $message;
+                }
+            }
 
-        imap_close($connection);
+            usleep(100_000);
+        } while (microtime(true) < $deadline);
+
+        Assert::fail(sprintf(
+            'Mail with subject "%s" did not arrive in "%s" of "%s" within %d seconds.',
+            $subject,
+            $folder,
+            $login,
+            self::TIMEOUT,
+        ));
+    }
+
+    /**
+     * Waits until no mail with the given subject is left in the folder.
+     *
+     * @param non-empty-string $login
+     * @param non-empty-string $folder
+     */
+    public function awaitNoMessage(string $login, string $subject, string $folder = 'INBOX'): void
+    {
+        $deadline = microtime(true) + self::TIMEOUT;
+
+        do {
+            $found = false;
+            foreach ($this->messages($login, $folder) as $message) {
+                if ($message->subject() === $subject) {
+                    $found = true;
+                    break;
+                }
+            }
+
+            if (! $found) {
+                return;
+            }
+
+            usleep(100_000);
+        } while (microtime(true) < $deadline);
+
+        Assert::fail(sprintf(
+            'Mail with subject "%s" is still in "%s" of "%s" after %d seconds.',
+            $subject,
+            $folder,
+            $login,
+            self::TIMEOUT,
+        ));
     }
 
     /**
@@ -121,7 +156,7 @@ final class GreenMail
      * @param non-empty-string $folder
      * @return list<ReceivedMessage>
      */
-    public function messages(string $login, string $folder = 'INBOX'): array
+    private function messages(string $login, string $folder): array
     {
         $connection = $this->connect($login, $folder);
 
@@ -141,18 +176,19 @@ final class GreenMail
         return $messages;
     }
 
-    private function connect(string $login, string $folder = 'INBOX'): Connection
+    private function connect(string $login, string $folder): Connection
     {
-        $connection = imap_open($this->path($folder), $login, self::PASSWORD, 0, 1);
+        $connection = imap_open(
+            sprintf('{%s:%d/service=imap/ssl}%s', self::HOST, self::IMAPS_PORT, $folder),
+            $login,
+            self::PASSWORD,
+            0,
+            1,
+        );
         if ($connection === false) {
             throw new RuntimeException(sprintf('Unable to connect to GreenMail IMAP: %s', (string) imap_last_error()));
         }
 
         return $connection;
-    }
-
-    private function path(string $folder): string
-    {
-        return sprintf('{%s:%d/service=imap/ssl}%s', self::HOST, self::IMAPS_PORT, $folder);
     }
 }
