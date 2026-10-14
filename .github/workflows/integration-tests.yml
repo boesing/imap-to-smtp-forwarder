@@ -4,12 +4,9 @@ on:
   workflow_call:
     inputs:
       image-artifact:
-        description: >-
-          Name of an artifact containing `image.tar` with the forwarder image (tagged as in compose.yml), which is tested
-          instead of building the image from the checked out sources.
+        description: Name of the artifact containing `image.tar` (see build-image.yml), which is the forwarder image under test.
         type: string
-        required: false
-        default: ""
+        required: true
 
 permissions:
   contents: read
@@ -23,14 +20,12 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Download forwarder image
-        if: inputs.image-artifact != ''
         uses: actions/download-artifact@v8
         with:
           name: ${{ inputs.image-artifact }}
           path: ${{ runner.temp }}
 
       - name: Load forwarder image
-        if: inputs.image-artifact != ''
         run: docker load --input "${RUNNER_TEMP}/image.tar"
 
       - name: Run integration tests

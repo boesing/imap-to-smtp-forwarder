@@ -63,9 +63,20 @@ jobs:
       - name: ${{ matrix.name }}
         run: ${{ matrix.command }}
 
+  # The image of a pull request is downloadable as artifact `image-pr-<number>` (`docker load --input image.tar`).
+  build:
+    name: Build image
+    uses: ./.github/workflows/build-image.yml
+    with:
+      artifact-name: ${{ github.event_name == 'pull_request' && format('image-pr-{0}', github.event.pull_request.number) || 'image' }}
+      retention-days: ${{ github.event_name == 'pull_request' && 7 || 1 }}
+
   integration:
     name: Integration tests
+    needs: build
     uses: ./.github/workflows/integration-tests.yml
+    with:
+      image-artifact: ${{ github.event_name == 'pull_request' && format('image-pr-{0}', github.event.pull_request.number) || 'image' }}
 
   dependabot-automerge:
     name: Dependabot automerge
