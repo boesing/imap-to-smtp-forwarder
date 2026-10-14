@@ -31,10 +31,12 @@ services:
       # Only used to create the folders which are used as `inboxToMove` (<email>/<folder>), there are no preloaded mails.
       - ./tests/docker/greenmail-preload:/preload:ro
     healthcheck:
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && exec 4<>/dev/tcp/127.0.0.1/3993"]
-      interval: 2s
+      # Asks the API whether all services (including IMAPS) are running. A plain connection to the TLS port without
+      # handshake would make GreenMail log a stack trace every time.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/service/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 1s
       timeout: 2s
-      retries: 30
+      retries: 20
 
   forwarder:
     # The CI loads the image which is going to be published with this tag, so that exactly this image is tested.
