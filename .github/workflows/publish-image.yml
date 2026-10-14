@@ -94,10 +94,9 @@ jobs:
           path: ${{ runner.temp }}/image.tar
           retention-days: 7
 
-      - name: Tag release
+      - name: Create release
         if: github.event_name != 'pull_request'
-        run: |
-          git tag "${VERSION}" "$GITHUB_SHA"
-          git push origin "${VERSION}"
+        run: gh release create "$VERSION" --target "$GITHUB_SHA" --title "$VERSION" --generate-notes
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
