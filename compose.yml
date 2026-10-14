@@ -31,7 +31,9 @@ services:
       retries: 30
 
   tests:
-    build: .
+    build:
+      context: .
+      target: test
     depends_on:
       greenmail:
         condition: service_healthy
