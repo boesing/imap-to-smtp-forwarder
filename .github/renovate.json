@@ -5,6 +5,8 @@
     "docker:pinDigests",
     "helpers:pinGitHubActionDigests"
   ],
+  "timezone": "Europe/Berlin",
+  "schedule": ["before 6am on monday"],
   "rangeStrategy": "bump",
   "labels": ["dependencies"],
   "vulnerabilityAlerts": {

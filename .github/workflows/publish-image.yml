@@ -1,16 +1,9 @@
 name: "Publish Image"
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - Dockerfile
-      - bin/**
-      - src/**
-      - composer.json
-      - composer.lock
-      - .github/workflows/publish-image.yml
+  # Daily check on main (UTC), a release is only created when image relevant files changed since the last one.
+  schedule:
+    - cron: "0 18 * * *"
   pull_request:
     paths:
       - Dockerfile
@@ -19,19 +12,52 @@ on:
       - composer.json
       - composer.lock
       - .github/workflows/publish-image.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-# Releases must not be cancelled half-way, otherwise a merge would never be published.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 jobs:
+  # Releases are only created when image relevant files changed since the last release (also for manual runs).
+  changes:
+    name: Check for image changes
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compare with last release
+        id: diff
+        run: |
+          # Reuse the paths of the pull_request trigger.
+          mapfile -t paths < <(yq '.on.pull_request.paths[] | ":(glob)" + .' .github/workflows/publish-image.yml)
+          last="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          if [ -z "$last" ] || ! git diff --quiet "$last" HEAD -- "${paths[@]}"; then
+            changed=true
+          else
+            changed=false
+          fi
+
+          echo "changed=${changed}" >> "$GITHUB_OUTPUT"
+          {
+            echo "Last release: ${last:-none}"
+            echo "Checked paths: ${paths[*]}"
+            echo "Release needed: ${changed}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   image:
     name: Build${{ github.event_name != 'pull_request' && ' and push' || '' }} image
+    needs: changes
+    if: needs.changes.outputs.changed == 'true' && (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
+    # Releases must not be cancelled half-way and must not run in parallel, as the version counter reads existing tags.
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.ref) || 'release' }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     permissions:
       contents: write
       packages: write
