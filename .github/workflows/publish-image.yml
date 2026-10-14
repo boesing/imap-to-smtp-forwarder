@@ -1,0 +1,130 @@
+name: "Publish Image"
+
+on:
+  # Daily check on main (UTC), a release is only created when image relevant files changed since the last one.
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Releases must not be cancelled half-way and must not run in parallel, as the version counter reads existing tags.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Releases are only created when image relevant files changed since the last release (also for manual runs).
+  changes:
+    name: Check for image changes
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Compare with last release
+        id: diff
+        run: |
+          # Everything which ends up in the image, see Dockerfile.
+          paths=(':(glob)Dockerfile' ':(glob)bin/**' ':(glob)src/**' ':(glob)composer.json' ':(glob)composer.lock')
+          last="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          if [ -z "$last" ] || ! git diff --quiet "$last" HEAD -- "${paths[@]}"; then
+            changed=true
+          else
+            changed=false
+          fi
+
+          echo "changed=${changed}" >> "$GITHUB_OUTPUT"
+          {
+            echo "Last release: ${last:-none}"
+            echo "Checked paths: ${paths[*]}"
+            echo "Release needed: ${changed}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Determine calendar version
+        id: version
+        run: |
+          today="$(date -u +%Y.%m.%d)"
+          existing="$(git ls-remote --tags --refs origin "refs/tags/${today}*" | wc -l | tr -d ' ')"
+          if [ "$existing" -eq 0 ]; then
+            echo "version=${today}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${today}.${existing}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Builds the image exactly once. The very same image is tested by the integration job and pushed by the publish job.
+  build:
+    name: Build image
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
+    uses: ./.github/workflows/build-image.yml
+    with:
+      artifact-name: image
+      version: ${{ needs.changes.outputs.version }}
+
+  integration:
+    name: Integration tests
+    needs: build
+    uses: ./.github/workflows/integration-tests.yml
+    with:
+      image-artifact: image
+
+  publish:
+    name: Push image and create release
+    needs:
+      - changes
+      - integration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=${{ needs.changes.outputs.version }}
+            type=raw,value={{date 'YYYY.MM'}}
+            type=raw,value=latest
+
+      - name: Download image
+        uses: actions/download-artifact@v8
+        with:
+          name: image
+          path: ${{ runner.temp }}
+
+      - name: Load image
+        run: docker load --input "${RUNNER_TEMP}/image.tar"
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        run: |
+          while read -r tag; do
+            docker tag imap-to-smtp-forwarder:integration "$tag"
+            docker push "$tag"
+          done <<< "$TAGS"
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+
+      - name: Create release
+        run: gh release create "$VERSION" --target "$GITHUB_SHA" --title "$VERSION" --generate-notes
+        env:
+          VERSION: ${{ needs.changes.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

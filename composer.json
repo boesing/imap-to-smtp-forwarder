@@ -8,29 +8,54 @@
             "Boesing\\ImapToSmtpForwarder\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Boesing\\ImapToSmtpForwarder\\Tests\\": "tests/"
+        }
+    },
     "require": {
-        "php": "~8.3.0",
-        "symfony/console": "^7.0",
-        "symfony/process": "^7.0",
-        "zbateson/mail-mime-parser": "^3.0",
-        "symfony/mailer": "^7.0",
-        "php-imap/php-imap": "^5.0",
-        "laminas/laminas-diactoros": "^3.3",
-        "cuyz/valinor": "^1.9"
+        "php": "~8.5.0",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "ext-imap": "*",
+        "ext-intl": "*",
+        "ext-mbstring": "*",
+        "cuyz/valinor": "^2.0",
+        "laminas/laminas-diactoros": "^3.9",
+        "php-imap/php-imap": "^5.1",
+        "symfony/console": "^7.4.21",
+        "symfony/mailer": "^7.4.19",
+        "symfony/process": "^7.4.21",
+        "zbateson/mail-mime-parser": "^3.0.9"
     },
     "require-dev": {
         "doctrine/coding-standard": "^12.0",
-        "vimeo/psalm": "^5.21"
+        "mikey179/vfsstream": "^1.6",
+        "phpunit/phpunit": "^13.0",
+        "vimeo/psalm": "^6.0"
+    },
+    "replace": {
+        "symfony/polyfill-ctype": "*",
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-intl-grapheme": "*",
+        "symfony/polyfill-intl-idn": "*",
+        "symfony/polyfill-intl-normalizer": "*",
+        "symfony/polyfill-mbstring": "*",
+        "symfony/polyfill-php80": "*",
+        "symfony/polyfill-php84": "*"
     },
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
-        "classmap-authoritative": true
+        "classmap-authoritative": true,
+        "sort-packages": true
     },
     "scripts": {
         "cs-check": "phpcs",
         "cs-fix": "phpcbf",
-        "analyze": "vendor/bin/psalm --stats"
+        "analyze": "vendor/bin/psalm --stats",
+        "test": "vendor/bin/phpunit",
+        "test-integration": "vendor/bin/phpunit --testsuite integration"
     }
 }

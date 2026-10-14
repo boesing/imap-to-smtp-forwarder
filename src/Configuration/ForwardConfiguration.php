@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Boesing\ImapToSmtpForwarder\Configuration;
 
 use Boesing\ImapToSmtpForwarder\AddressTransfer;
+use Override;
 use Psr\Http\Message\StreamInterface;
 
 final class ForwardConfiguration implements ForwardConfigurationInterface
@@ -23,31 +24,37 @@ final class ForwardConfiguration implements ForwardConfigurationInterface
     ) {
     }
 
+    #[Override]
     public function getImapConfiguration(): ImapConfigurationInterface
     {
         return $this->imapConfiguration;
     }
 
+    #[Override]
     public function getSmtpConfiguration(): SmtpConfigurationInterface
     {
         return $this->smtpConfiguration;
     }
 
+    #[Override]
     public function getForwardDestinations(): array
     {
         return $this->forwardDestinations;
     }
 
+    #[Override]
     public function getTemplate(): StreamInterface
     {
         return $this->template;
     }
 
+    #[Override]
     public function getActionAfterForward(): DeleteActionInterface|MoveActionInterface
     {
         return $this->action;
     }
 
+    #[Override]
     public function getInboxToWatch(): string
     {
         return $this->inboxToWatch;

@@ -28,6 +28,39 @@ To build the docker image, just use `docker build`, i.e.:
 docker build -t "imap-to-smtp-forwarder:local" .
 ```
 
+## Testing
+
+Unit tests (`tests/Unit`) are the default PHPUnit suite:
+
+```shell
+vendor/bin/phpunit
+```
+
+Integration tests (`tests/Integration`) test the production image (`target: production` of the `Dockerfile`) as a black box.
+Everything needed is defined in `compose.yml`:
+
+- a throw-away CA and server certificate, so the IMAPS certificate is validated like in production,
+- [GreenMail](https://greenmail-mail-test.github.io/greenmail/) as IMAP/SMTP server with fixed accounts,
+- the forwarder, started as daemon with the real configuration `tests/Integration/configuration.json`,
+- the PHPUnit runner, which delivers mails to GreenMail and waits (max. 5 seconds per mail) until the forwarder processed them.
+
+```shell
+docker compose run --rm tests
+```
+
+Additional arguments are passed to PHPUnit, i.e. `docker compose run --rm tests --filter testMoves`.
+The forwarder keeps running between test runs, use `docker compose up -d --build forwarder` to apply changes to the code or
+the configuration. Run `docker compose down -v` afterwards to remove the containers and the generated certificates.
+
+The CI does not use the `tests` service, PHPUnit runs directly on the runner. Only the forwarder and GreenMail run in containers,
+GreenMail's ports are published by `compose.ci.yml`. You can do the same locally:
+
+```shell
+export COMPOSE_FILE=compose.yml:compose.ci.yml GREENMAIL_HOST=127.0.0.1 GREENMAIL_IMAP_FLAGS=/novalidate-cert
+docker compose up --detach --wait forwarder
+composer test-integration
+```
+
 ## Installation
 
 To run this docker container, you have to build it and then mount the `configuration.json` as follows:
@@ -216,3 +249,12 @@ additionally you can configure the actual `inboxToMove` in case the message shou
   ]
 }
 ```
+
+## Dependency updates
+
+Dependencies (Composer packages, Docker images and GitHub Actions) are updated by [Renovate](https://docs.renovatebot.com/),
+configured in `.github/renovate.json`. It runs once a week (Monday morning) and merges non-major updates automatically once the CI is green.
+Major updates have to be reviewed and merged manually.
+
+Security updates are handled by Dependabot (security updates only, no version updates). These pull requests are merged automatically
+once the CI is green as well.

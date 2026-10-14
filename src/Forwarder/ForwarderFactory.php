@@ -9,6 +9,7 @@ use Boesing\ImapToSmtpForwarder\Configuration\ImapConfigurationInterface;
 use Boesing\ImapToSmtpForwarder\Configuration\SmtpConfigurationInterface;
 use Boesing\ImapToSmtpForwarder\Imap\Imap;
 use Boesing\ImapToSmtpForwarder\Imap\ImapInterface;
+use Override;
 use Psr\Http\Message\StreamFactoryInterface;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport\Dsn;
@@ -34,6 +35,7 @@ final class ForwarderFactory implements ForwarderFactoryInterface
     ) {
     }
 
+    #[Override]
     public function createForwarderFromConfiguration(
         ForwardConfigurationInterface $forwardConfiguration,
     ): ForwarderInterface {
@@ -78,7 +80,7 @@ final class ForwarderFactory implements ForwarderFactoryInterface
 
         $smtp = $factory->create(Dsn::fromString(
             sprintf(
-                'tcp://%s:%s@%s:%d',
+                'smtp://%s:%s@%s:%d',
                 $configuration->getUsername(),
                 $configuration->getPassword(),
                 $configuration->getHostname(),

@@ -1,0 +1,10 @@
+# Override for compose.yml, used by the integration test workflow, where PHPUnit runs directly on the runner (setup-php)
+# instead of in the `tests` service. Publishes the GreenMail ports, so that the test client can reach them.
+#
+#   docker compose -f compose.yml -f compose.ci.yml up --detach --wait forwarder
+services:
+  greenmail:
+    ports:
+      - "127.0.0.1:3025:3025"
+      - "127.0.0.1:3993:3993"
+      - "127.0.0.1:8080:8080"

@@ -1,0 +1,62 @@
+name: "Build Image"
+
+# Builds the production image exactly once and provides it as artifact (`image.tar`), tagged as compose.yml expects it for
+# the forwarder service. Used by pull requests (tested and downloadable) and by the release (tested and pushed).
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        description: Name of the artifact containing `image.tar`.
+        type: string
+        required: true
+      retention-days:
+        description: Days to keep the artifact.
+        type: number
+        default: 1
+      version:
+        description: Version of the image, only used for the image labels.
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=${{ inputs.version != '' && inputs.version || 'ci' }}
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: production
+          push: false
+          tags: imap-to-smtp-forwarder:integration
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=docker,dest=${{ runner.temp }}/image.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload image
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ runner.temp }}/image.tar
+          retention-days: ${{ inputs.retention-days }}
