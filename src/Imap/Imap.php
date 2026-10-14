@@ -90,7 +90,10 @@ final class Imap implements ImapInterface
     #[Override]
     public function move(MessageInterface $messageToForward, string $inboxToMove, bool $markAsRead): void
     {
-        $this->mailbox->markMailAsRead($messageToForward->getMessageId());
+        if ($markAsRead) {
+            $this->mailbox->markMailAsRead($messageToForward->getMessageId());
+        }
+
         $this->mailbox->moveMail($messageToForward->getMessageId(), $inboxToMove);
     }
 
