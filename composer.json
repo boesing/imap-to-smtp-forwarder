@@ -26,7 +26,7 @@
         "symfony/console": "^7.4.21",
         "symfony/mailer": "^7.4.19",
         "symfony/process": "^7.4.21",
-        "zbateson/mail-mime-parser": "^4.0"
+        "zbateson/mail-mime-parser": "^4.0.6"
     },
     "require-dev": {
         "doctrine/coding-standard": "^14.0",
