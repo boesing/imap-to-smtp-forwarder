@@ -18,6 +18,7 @@ on:
       - psalm.xml.dist
       - .github/workflows/**
       - "!.github/workflows/publish-image.yml"
+      - "!.github/workflows/composer-diff.yml"
   push:
     branches:
       - main
