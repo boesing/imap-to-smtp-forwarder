@@ -33,6 +33,12 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "Update the PHP platform constraint together with the PHP docker image",
+      "matchManagers": ["composer", "dockerfile"],
+      "matchDepNames": ["php"],
+      "groupName": "PHP"
+    },
+    {
       "matchManagers": ["composer"],
       "addLabels": ["php"]
     },
