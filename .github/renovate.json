@@ -23,7 +23,7 @@
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "automerge": true,
       "automergeType": "pr",
-      "platformAutomerge": true
+      "platformAutomerge": false
     },
     {
       "description": "Major updates are listed in the Dependency Dashboard and only get a PR after approving them there",
