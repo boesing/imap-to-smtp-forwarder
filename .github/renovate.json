@@ -8,7 +8,7 @@
   "dependencyDashboard": true,
   "timezone": "Europe/Berlin",
   "schedule": ["before 6am on monday"],
-  "rangeStrategy": "bump",
+  "rangeStrategy": "update-lockfile",
   "minimumReleaseAge": "14 days",
   "internalChecksFilter": "strict",
   "labels": ["dependencies"],
