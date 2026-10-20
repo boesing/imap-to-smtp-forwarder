@@ -20,7 +20,7 @@
         "ext-imap": "*",
         "ext-intl": "*",
         "ext-mbstring": "*",
-        "cuyz/valinor": "^2.0",
+        "cuyz/valinor": "^2.6.0",
         "laminas/laminas-diactoros": "^3.9",
         "php-imap/php-imap": "^6.0",
         "symfony/console": "^7.4.21",
