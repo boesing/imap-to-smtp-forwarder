@@ -19,6 +19,7 @@ on:
       - .github/workflows/**
       - "!.github/workflows/publish-image.yml"
       - "!.github/workflows/composer-diff.yml"
+      - "!.github/workflows/renovate-config-validator.yml"
   push:
     branches:
       - main

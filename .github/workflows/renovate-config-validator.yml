@@ -1,0 +1,23 @@
+# Renovate reads its configuration from the default branch, so an invalid configuration has to be caught before merging.
+name: "Renovate Config Validator"
+on:
+  pull_request:
+    paths:
+      - .github/renovate.json
+      - .github/workflows/renovate-config-validator.yml
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    name: Validate renovate config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Validate renovate config
+        uses: suzuki-shunsuke/github-action-renovate-config-validator@v2
+        with:
+          config_file_path: .github/renovate.json
