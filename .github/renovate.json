@@ -26,6 +26,11 @@
       "platformAutomerge": true
     },
     {
+      "description": "Major updates are listed in the Dependency Dashboard and only get a PR after approving them there",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
       "matchManagers": ["composer"],
       "addLabels": ["php"]
     },

@@ -21,6 +21,8 @@ RUN composer install --no-dev --no-plugins --classmap-authoritative
 FROM runtime AS production
 WORKDIR /usr/src/forwarder
 RUN mkdir etc
+# Prefix 00 so that additional ini files (sorted alphabetically, i.e. the one mounted by compose.yml) can override it.
+COPY docker/php-production.ini /usr/local/etc/php/conf.d/00-production.ini
 COPY --from=vendor /usr/src/forwarder/vendor vendor/
 COPY bin/console bin/
 COPY src src/

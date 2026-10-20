@@ -57,6 +57,7 @@ services:
         && exec php ./bin/console start -d
     volumes:
       - certs:/certs:ro
+      - ./tests/docker/error-reporting.ini:/usr/local/etc/php/conf.d/error-reporting.ini:ro
       - ./tests/Integration/configuration.json:/usr/src/forwarder/etc/configuration.json:ro
 
   tests:

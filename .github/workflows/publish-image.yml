@@ -33,7 +33,7 @@ jobs:
         id: diff
         run: |
           # Everything which ends up in the image, see Dockerfile.
-          paths=(':(glob)Dockerfile' ':(glob)bin/**' ':(glob)src/**' ':(glob)composer.json' ':(glob)composer.lock')
+          paths=(':(glob)Dockerfile' ':(glob)bin/**' ':(glob)docker/**' ':(glob)src/**' ':(glob)composer.json' ':(glob)composer.lock')
           last="$(git describe --tags --abbrev=0 2>/dev/null || true)"
           if [ -z "$last" ] || ! git diff --quiet "$last" HEAD -- "${paths[@]}"; then
             changed=true
