@@ -14,7 +14,7 @@
         }
     },
     "require": {
-        "php": "~8.5.0",
+        "php": "~8.5.11",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-imap": "*",
