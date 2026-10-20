@@ -1,18 +1,32 @@
+# Only runs when something changed which is relevant for the checks, the image or the integration tests. Don't mark
+# any of the jobs as required status check, as they do not report anything when the workflow is skipped.
 name: "Continuous Integration"
-
 on:
   pull_request:
+    paths: &paths
+      - src/**
+      - tests/**
+      - bin/**
+      - docker/**
+      - Dockerfile
+      - compose.yml
+      - compose.ci.yml
+      - composer.json
+      - composer.lock
+      - phpcs.xml.dist
+      - phpunit.xml.dist
+      - psalm.xml.dist
+      - .github/workflows/**
+      - "!.github/workflows/publish-image.yml"
   push:
     branches:
       - main
-
+    paths: *paths
 permissions:
   contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   checks:
     name: ${{ matrix.name }}
@@ -33,7 +47,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
       - name: Setup extension cache
         id: extcache
         uses: shivammathur/cache-extensions@v1
@@ -41,14 +54,12 @@ jobs:
           php-version: ${{ env.PHP_VERSION }}
           extensions: ${{ env.PHP_EXTENSIONS }}
           key: php-extensions-v1
-
       - name: Cache extensions
         uses: actions/cache@v6
         with:
           path: ${{ steps.extcache.outputs.dir }}
           key: ${{ steps.extcache.outputs.key }}
           restore-keys: ${{ steps.extcache.outputs.key }}
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -56,13 +67,10 @@ jobs:
           extensions: ${{ env.PHP_EXTENSIONS }}
           coverage: none
           tools: composer:v2
-
       - name: Install dependencies
         run: composer install --no-interaction --no-progress
-
       - name: ${{ matrix.name }}
         run: ${{ matrix.command }}
-
   # The image of a pull request is downloadable as artifact `image-pr-<number>` (`docker load --input image.tar`).
   build:
     name: Build image
@@ -70,14 +78,12 @@ jobs:
     with:
       artifact-name: ${{ github.event_name == 'pull_request' && format('image-pr-{0}', github.event.pull_request.number) || 'image' }}
       retention-days: ${{ github.event_name == 'pull_request' && 7 || 1 }}
-
   integration:
     name: Integration tests
     needs: build
     uses: ./.github/workflows/integration-tests.yml
     with:
       image-artifact: ${{ github.event_name == 'pull_request' && format('image-pr-{0}', github.event.pull_request.number) || 'image' }}
-
   dependabot-automerge:
     name: Dependabot automerge
     runs-on: ubuntu-latest
