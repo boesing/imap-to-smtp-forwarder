@@ -30,7 +30,7 @@
     },
     "require-dev": {
         "doctrine/coding-standard": "^14.0",
-        "mikey179/vfsstream": "^1.6",
+        "mikey179/vfsstream": "^1.6.12",
         "phpunit/phpunit": "^13.0",
         "vimeo/psalm": "^6.0"
     },
