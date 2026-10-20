@@ -17,6 +17,7 @@ on:
       - phpunit.xml.dist
       - psalm.xml.dist
       - .github/workflows/**
+      - "!.github/workflows/publish-image.yml"
   push:
     branches:
       - main
