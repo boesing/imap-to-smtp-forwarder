@@ -1,0 +1,37 @@
+# Comments the package changes of `composer.lock` on the pull request, including transitive dependencies which are not
+# listed in the pull request description of renovate.
+name: "Composer Diff"
+on:
+  pull_request:
+    paths:
+      - composer.lock
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  composer-diff:
+    name: Composer diff
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The base commit is required to read the previous `composer.lock`
+          fetch-depth: 0
+      - name: Generate composer diff
+        id: composer-diff
+        uses: IonBazan/composer-diff-action@v2
+        with:
+          with-links: true
+      - name: Comment composer diff
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: composer-diff
+          message: |
+            ### Composer package changes
+            ${{ steps.composer-diff.outputs.composer_diff || 'No package changes.' }}
