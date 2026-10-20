@@ -17,7 +17,7 @@ use function sleep;
 
 final class StartCommand extends Command
 {
-    public const NAME = 'start';
+    public const string NAME = 'start';
 
     public function __construct(
         private readonly ConfigurationInterface $configuration,
