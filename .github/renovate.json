@@ -9,6 +9,8 @@
   "timezone": "Europe/Berlin",
   "schedule": ["before 6am on monday"],
   "rangeStrategy": "bump",
+  "minimumReleaseAge": "14 days",
+  "internalChecksFilter": "strict",
   "labels": ["dependencies"],
   "vulnerabilityAlerts": {
     "enabled": false
