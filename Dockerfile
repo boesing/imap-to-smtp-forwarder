@@ -1,22 +1,29 @@
-FROM composer:2.6.6 AS composer
+FROM ghcr.io/mlocati/php-extension-installer:latest AS php-extension-installer
+FROM composer/composer:2-bin AS composer
 
-FROM php:8.3-cli-alpine AS base
-ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+# Runtime base: PHP and the extensions required by the application, nothing else.
+FROM php:8.5-cli-alpine AS runtime
+RUN --mount=type=bind,from=php-extension-installer,source=/usr/bin/install-php-extensions,target=/usr/local/bin/install-php-extensions \
+    install-php-extensions imap intl
 
-RUN mkdir -p /usr/src/forwarder/etc/ /usr/src/forwarder/bin/
-
-RUN chmod +x /usr/local/bin/install-php-extensions && \
-    install-php-extensions imap zip
-
-# Add composer binary to the image
-COPY --from=composer/composer:2-bin /composer /usr/bin/composer
-
-COPY composer.* /usr/src/forwarder
-COPY bin/console /usr/src/forwarder/bin/
-COPY src /usr/src/forwarder/src/
-
+# Used by `compose.yml` to run the test suites: adds composer, which installs the dev dependencies at runtime.
+FROM runtime AS test
+RUN apk add --no-cache unzip
+COPY --from=composer /composer /usr/bin/composer
 WORKDIR /usr/src/forwarder
+
+FROM test AS vendor
+COPY composer.json composer.lock ./
+COPY src src/
 RUN composer install --no-dev --no-plugins --classmap-authoritative
+
+# Final image: no composer, no build tools, only the application and its production dependencies.
+FROM runtime AS production
+WORKDIR /usr/src/forwarder
+RUN mkdir etc
+# Prefix 00 so that additional ini files (sorted alphabetically, i.e. the one mounted by compose.yml) can override it.
+COPY docker/php-production.ini /usr/local/etc/php/conf.d/00-production.ini
+COPY --from=vendor /usr/src/forwarder/vendor vendor/
+COPY bin/console bin/
+COPY src src/
 CMD ["php", "./bin/console", "start", "-d"]
-
-

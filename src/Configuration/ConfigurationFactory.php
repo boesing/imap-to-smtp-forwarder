@@ -13,6 +13,7 @@ use CuyZ\Valinor\Mapper\MappingError;
 use CuyZ\Valinor\Mapper\Source\JsonSource;
 use CuyZ\Valinor\Mapper\TreeMapper;
 use InvalidArgumentException;
+use Override;
 use Psr\Http\Message\StreamFactoryInterface;
 
 use function array_map;
@@ -33,6 +34,7 @@ final class ConfigurationFactory implements ConfigurationFactoryInterface
     ) {
     }
 
+    #[Override]
     public function createFromConfigurationFile(string $pathToConfigurationFile): ConfigurationInterface
     {
         if (! is_readable($pathToConfigurationFile) || ! is_file($pathToConfigurationFile)) {

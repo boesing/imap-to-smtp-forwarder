@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Boesing\ImapToSmtpForwarder\Configuration;
 
+use Override;
+
 final class MoveAction implements MoveActionInterface
 {
     /**
@@ -15,11 +17,13 @@ final class MoveAction implements MoveActionInterface
     ) {
     }
 
+    #[Override]
     public function getInboxToMove(): string
     {
         return $this->inboxToMove;
     }
 
+    #[Override]
     public function markAsRead(): bool
     {
         return $this->markAsRead;

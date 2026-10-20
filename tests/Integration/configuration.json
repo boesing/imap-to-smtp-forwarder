@@ -1,0 +1,96 @@
+{
+  "addresses": {
+    "forwarder": {
+      "name": "Forwarder",
+      "email": "forwarder@example.com"
+    },
+    "jane": {
+      "name": "Jane",
+      "email": "jane@example.com"
+    },
+    "wade": {
+      "name": "Wade",
+      "email": "wade@example.com"
+    }
+  },
+  "templates": {
+    "default": [
+      "Hello %recipient.name%,",
+      "a message from %message.from.email% to %message.to.email% was forwarded."
+    ],
+    "short": [
+      "Moved message from %message.from.email%."
+    ]
+  },
+  "imap": {
+    "delete": {
+      "hostname": "greenmail",
+      "port": 3993,
+      "username": "fwd-delete",
+      "password": "secret"
+    },
+    "move": {
+      "hostname": "greenmail",
+      "port": 3993,
+      "username": "fwd-move",
+      "password": "secret"
+    },
+    "unread": {
+      "hostname": "greenmail",
+      "port": 3993,
+      "username": "fwd-unread",
+      "password": "secret"
+    }
+  },
+  "smtp": {
+    "main": {
+      "hostname": "greenmail",
+      "port": 3025,
+      "username": "jane",
+      "password": "secret"
+    }
+  },
+  "forwards": [
+    {
+      "imap": "delete",
+      "smtp": {
+        "identifier": "main",
+        "sender": "forwarder"
+      },
+      "action": "delete",
+      "recipients": [
+        "jane",
+        "wade"
+      ],
+      "template": "default"
+    },
+    {
+      "imap": "move",
+      "smtp": {
+        "identifier": "main",
+        "sender": "forwarder"
+      },
+      "action": "move",
+      "inboxToMove": "Archive",
+      "recipients": [
+        "jane"
+      ],
+      "template": "short"
+    },
+    {
+      "imap": "unread",
+      "smtp": {
+        "identifier": "main",
+        "sender": "forwarder"
+      },
+      "action": "move",
+      "inboxToMove": "Archive",
+      "markAsRead": false,
+      "recipients": [
+        "wade"
+      ],
+      "template": "short"
+    }
+  ],
+  "loopDelay": 1
+}

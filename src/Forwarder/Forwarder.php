@@ -9,6 +9,7 @@ use Boesing\ImapToSmtpForwarder\Configuration\DeleteActionInterface;
 use Boesing\ImapToSmtpForwarder\Configuration\MoveActionInterface;
 use Boesing\ImapToSmtpForwarder\Imap\ImapInterface;
 use Boesing\ImapToSmtpForwarder\Imap\MessageInterface;
+use Override;
 use Psr\Http\Message\StreamInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Mailer\MailerInterface;
@@ -38,6 +39,7 @@ final class Forwarder implements ForwarderInterface
     ) {
     }
 
+    #[Override]
     public function forward(OutputInterface $output): void
     {
         foreach ($this->imap->fetch($this->inboxToWatch, $output) as $messageToForward) {

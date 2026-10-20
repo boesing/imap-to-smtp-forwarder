@@ -1,5 +1,6 @@
 #!/usr/bin/env php
 <?php
+
 declare(strict_types=1);
 
 use Boesing\ImapToSmtpForwarder\Command\StartCommand;
@@ -13,7 +14,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 (static function (): void {
     require __DIR__ . '/../vendor/autoload.php';
-    $app = new Application('imap-to-smtp-forwarder', InstalledVersions::getRootPackage()['pretty_version']);
+    $app    = new Application('imap-to-smtp-forwarder', InstalledVersions::getRootPackage()['pretty_version']);
     $output = new ConsoleOutput();
 
     try {
@@ -27,7 +28,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
         exit(1);
     }
 
-    $app->add(new StartCommand(
+    $app->addCommand(new StartCommand(
         $configuration,
         new ForwarderFactory(new StreamFactory()),
     ));

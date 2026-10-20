@@ -1,0 +1,81 @@
+# Integration test environment:
+#
+#   docker compose run --rm tests
+#
+# GreenMail provides SMTP (3025) and IMAPS (3993). The forwarder runs as the production image (`target: production`)
+# with the real configuration `tests/Integration/configuration.json`. The `tests` service only delivers mails to
+# GreenMail and verifies what arrives, it does not contain the code under test.
+services:
+  certs:
+    image: alpine/openssl:latest
+    entrypoint: ["sh", "/generate-certs.sh"]
+    volumes:
+      - certs:/certs
+      - ./tests/docker/generate-certs.sh:/generate-certs.sh:ro
+
+  greenmail:
+    image: greenmail/standalone:2.1.3
+    depends_on:
+      certs:
+        condition: service_completed_successfully
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.all
+        -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.tls.keystore.file=/certs/greenmail.p12
+        -Dgreenmail.tls.keystore.password=changeit
+        -Dgreenmail.users=fwd-delete:secret@example.com,fwd-move:secret@example.com,fwd-unread:secret@example.com,jane:secret@example.com,wade:secret@example.com
+        -Dgreenmail.preload.dir=/preload
+    volumes:
+      - certs:/certs:ro
+      # Only used to create the folders which are used as `inboxToMove` (<email>/<folder>), there are no preloaded mails.
+      - ./tests/docker/greenmail-preload:/preload:ro
+    healthcheck:
+      # Asks the API whether all services (including IMAPS) are running. A plain connection to the TLS port without
+      # handshake would make GreenMail log a stack trace every time.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/service/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 1s
+      timeout: 2s
+      retries: 20
+
+  forwarder:
+    # The CI loads the image which is going to be published with this tag, so that exactly this image is tested.
+    image: imap-to-smtp-forwarder:integration
+    build:
+      context: .
+      target: production
+    depends_on:
+      greenmail:
+        condition: service_healthy
+    # Trusts the test CA (so ext-imap validates the GreenMail certificate like it does in production), then starts the image default command.
+    command:
+      - sh
+      - -c
+      - >-
+        cp /certs/ca.crt /usr/local/share/ca-certificates/forwarder-test-ca.crt
+        && update-ca-certificates >/dev/null
+        && exec php ./bin/console start -d
+    volumes:
+      - certs:/certs:ro
+      - ./tests/docker/error-reporting.ini:/usr/local/etc/php/conf.d/error-reporting.ini:ro
+      - ./tests/Integration/configuration.json:/usr/src/forwarder/etc/configuration.json:ro
+
+  tests:
+    build:
+      context: .
+      target: test
+    depends_on:
+      greenmail:
+        condition: service_healthy
+      forwarder:
+        condition: service_started
+    working_dir: /usr/src/forwarder
+    command: ["sh", "tests/docker/run-integration-tests.sh"]
+    volumes:
+      - .:/usr/src/forwarder
+      - vendor:/usr/src/forwarder/vendor
+      - certs:/certs:ro
+
+volumes:
+  certs:
+  vendor:
