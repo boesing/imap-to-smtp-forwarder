@@ -128,3 +128,4 @@ jobs:
         env:
           VERSION: ${{ needs.changes.outputs.version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
