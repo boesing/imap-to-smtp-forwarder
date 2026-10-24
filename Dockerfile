@@ -1,4 +1,4 @@
-FROM ghcr.io/mlocati/php-extension-installer:latest AS php-extension-installer
+FROM ghcr.io/mlocati/php-extension-installer:latest@sha256:ac4b252c153a9f6de5578ff2c417790aba836bb49855543144606033eceda253 AS php-extension-installer
 FROM composer/composer:2-bin AS composer
 
 # Runtime base: PHP and the extensions required by the application, nothing else.
