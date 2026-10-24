@@ -19,13 +19,13 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # The base commit is required to read the previous `composer.lock`
           fetch-depth: 0
       - name: Generate composer diff
         id: composer-diff
-        uses: IonBazan/composer-diff-action@v2
+        uses: IonBazan/composer-diff-action@e2022e8718d05cc6e4e5990a06fc928c75837f76 # v2
         with:
           with-links: true
       - name: Comment composer diff
