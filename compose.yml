@@ -7,7 +7,7 @@
 # GreenMail and verifies what arrives, it does not contain the code under test.
 services:
   certs:
-    image: alpine/openssl:latest
+    image: alpine/openssl:latest@sha256:1c361a204e9791bec6202bccbd1065eafaa65cb5a1a9a06ae000238569fba6a2
     entrypoint: ["sh", "/generate-certs.sh"]
     volumes:
       - certs:/certs
