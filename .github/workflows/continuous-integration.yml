@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Setup extension cache
         id: extcache
-        uses: shivammathur/cache-extensions@v1
+        uses: shivammathur/cache-extensions@d894929efeece5f8d386bd667369b321947064ad # v1
         with:
           php-version: ${{ env.PHP_VERSION }}
           extensions: ${{ env.PHP_EXTENSIONS }}
