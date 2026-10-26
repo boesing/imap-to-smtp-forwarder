@@ -1,5 +1,5 @@
 FROM ghcr.io/mlocati/php-extension-installer:latest@sha256:ac4b252c153a9f6de5578ff2c417790aba836bb49855543144606033eceda253 AS php-extension-installer
-FROM composer/composer:2-bin AS composer
+FROM composer/composer:2-bin@sha256:016c41066558559142758092f7ef286d66ae113df23d49e086fdda0166dd5f01 AS composer
 
 # Runtime base: PHP and the extensions required by the application, nothing else.
 FROM php:8.5-cli-alpine AS runtime
