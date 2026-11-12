@@ -2,7 +2,7 @@ FROM ghcr.io/mlocati/php-extension-installer:latest@sha256:ac4b252c153a9f6de5578
 FROM composer/composer:2-bin AS composer
 
 # Runtime base: PHP and the extensions required by the application, nothing else.
-FROM php:8.5-cli-alpine AS runtime
+FROM php:8.5-cli-alpine@sha256:e899a75c775804e5466dbd9c96b31f8b6c6ae2ddb053a8466223a0c32992ff8e AS runtime
 RUN --mount=type=bind,from=php-extension-installer,source=/usr/bin/install-php-extensions,target=/usr/local/bin/install-php-extensions \
     install-php-extensions imap intl
 
